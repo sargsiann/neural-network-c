@@ -18,6 +18,12 @@ typedef struct s_matrix  {
 
 
 
+// O - OUTPUT VALUES OF EACH LAYER IN VECTOR TYPE LIKE [I1,I2, -- IN] with N neurons - Y
+// W -  WEIGHTS MATRIX WILL BE [w1 , w2,  ... wn (in column) etc ... M times n1,n2,nn (all in columns)] with output to m neurons
+// B - The biases for each will be just [b1,b2  .. bn] and will add up to matrix
+
+// SO THE INPUT FOR THE NEXT LAYER WILL BE I = OXW + B THE FORMULA FOR FEED FORWARDING
+
 // ACTIVATION FUNCTIONS
 
 // if the NN was linear and with no activ functions it could solve only cases like of all lights or some lights are not lighting
@@ -82,6 +88,12 @@ float	SoftPlus(float total) {
 
 
 // Multiplications of two vectors (random sized)
+// The main idea in each neuron will get total from its inputs by vec multiplication of inputs and its weights
+// [i1,i2 ... ,in] x [w1,w2, ... ,wn] + BIAS 
+// The bias is usefull to avoid 0 cases to not acivateing and some logic
+// For example to guess house prices Inputs will be the parametres weights how any characteristic affects the price
+// AND THE BIAS WILL BE START PRICE OF EACH HOUSE SO IF WE HAVE NO INPUTS WE HAVES BIAS THAT WILL RETURN JUST START PRICE
+
 t_vec vectors_multiply(t_vec v, t_vec m) {
 	if (v.size != m.size) 
 		return (t_vec){NULL, 0};
@@ -96,6 +108,12 @@ t_vec vectors_multiply(t_vec v, t_vec m) {
 	}
 	return result;
 }
+
+// The idea of n inputs connected to n nodes to get the total of previous is matrix mul like 
+// will get the matrix of totals will be to each node n inputs m outputs
+// Y = [i1, i2 ... in] x [w(1)1][w(2)1] .. m []
+//                       [w(1)2][w(2)2] .. m []
+// 						 [w(1)3][w(2)3] .. m []
 
 t_matrix matrix_multiply(t_matrix a, t_matrix b) {
 	if (a.cols != b.rows) 
