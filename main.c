@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 # define MATH_E  2.71828
 
@@ -157,4 +159,161 @@ t_matrix	*transpose_mtx(t_matrix *a) {
 		}
 	}
 	return new;
+}
+
+void	print_mtx(t_matrix *mtx) 
+{
+	printf("----------------------------\n");
+	for (size_t i = 0; i < mtx->rows; i++) {
+		for (size_t j = 0; j < mtx->cols; j++) {
+			printf("%f ", mtx->mat[i][j]);
+		}
+		printf("\n");
+	}
+	printf("----------------------------\n");
+}
+
+void	free_mtx(t_matrix *mtx) {
+	if (!mtx)
+		return;
+	for (size_t i = 0; i < mtx->rows; i++) {
+		free(mtx->mat[i]);
+	}
+	free(mtx->mat);
+}
+
+
+// Function for adding padding to matrix
+float	**padding_added_mtx(t_matrix *image, int padding, bool flag) 
+{
+	// Rows and cols are equal
+	size_t rows = image->rows + 2 * padding;
+	size_t cols = rows;
+
+	printf("Rows: %zu, Cols: %zu\n", rows, cols);
+	float	**mtx = (float **)malloc(sizeof(float *) * rows);
+	for (size_t i = 0; i < rows;++i) {
+		mtx[i] = (float *)malloc(sizeof(float ) * rows);
+		for (size_t j = 0; j < cols; ++j) {
+			if (j < padding || cols - j <= padding || i < padding || rows - i <= padding)
+			{
+				mtx[i][j] = 0;
+			}
+			else 
+				mtx[i][j] = image->mat[i - padding][j - padding];
+		}
+	}
+	if (flag)
+		free_mtx(image);
+	return mtx;
+}
+
+float	find_value_kernel(t_matrix *kernel, float **image_mtx, size_t start_row, size_t start_col) 
+{
+	// 
+	float 	**filter = kernel->mat;
+	size_t	size = kernel->cols;
+	float	res = 0;
+	size_t	col = start_col;
+	for (size_t i = 0; i < size; i++) {
+		// Going back to start col for each row
+		start_col = col;
+		for (size_t j = 0;j < size;j++) {
+			res += image_mtx[start_row][start_col] * filter[i][j];
+			printf("%zu%zux%zu%zu + ",start_row, start_col,j, i);
+			start_col++;
+		}
+		// Going to next row
+		start_row++;
+	}
+	printf(" = %f", res);
+	printf("\n\n\n");
+	return res;
+}
+
+
+// Filtering gets parametres as image mtx , martix of filter, padding size (default zero), and stride size (default one)
+t_matrix	filtering(t_matrix *image, t_matrix *kernel, int pding_size, int stride) 
+{
+	t_matrix res;
+	res.mat = NULL;
+	
+	if (image->cols != image->rows || kernel->cols != kernel->rows)
+		return res;
+		
+	// The matrix rows and cols calculation
+	size_t	rows = (image->rows + 2 * pding_size - kernel->rows)/stride + 1;
+	size_t	cols = rows;
+
+	res.cols = cols;
+	res.rows = rows;
+	printf("Rows: %zu, Cols: %zu\n", rows, cols);
+	// If wee add padding to our edges wee need to reallocate and free image
+	if (pding_size != 0)
+		image->mat = padding_added_mtx(image, pding_size, true);
+
+	res.mat = malloc(sizeof(float *) * rows);
+	for (size_t i = 0; i < rows; i++) {
+		res.mat[i] = malloc(sizeof(float) * cols);
+	}
+	print_mtx(image);
+	size_t	s_row = 0;
+	size_t	s_col = 0;
+	for (size_t i = 0; i < rows; i++)
+	{
+		s_row = i * stride;
+		for (size_t j = 0; j < cols; j++)
+		{
+			s_col = j * stride;
+			if (j + kernel->cols > image->cols) 
+				break;
+			res.mat[i][j] = find_value_kernel(kernel, image->mat, s_row, s_col);
+			
+		}
+		if (i + kernel->rows > image->rows)
+			break;
+	}
+	printf("\n\n\n");
+	printf("Filtered Matrix \n");
+	print_mtx(&res);
+}
+
+int main() 
+{
+	t_matrix mtx;
+
+	mtx.rows = 6;
+	mtx.cols = 6;
+	mtx.mat = malloc(sizeof(float *) * mtx.rows);
+	for (size_t i = 0; i < mtx.rows; i++) {
+		mtx.mat[i] = malloc(sizeof(float) * mtx.cols);
+		for (size_t j = 0; j < mtx.cols; j++) {
+			if (j >= 3) 
+				mtx.mat[i][j] = 1;
+			else
+				mtx.mat[i][j] = 0;
+		}
+	}
+	t_matrix kernel;
+
+	kernel.rows = 3;
+	kernel.cols = 3;
+
+	kernel.mat = malloc(sizeof(float *) * kernel.rows);
+	for (size_t i = 0; i < kernel.rows; i++) {
+		kernel.mat[i] = malloc(sizeof(float) * kernel.cols);
+		for (size_t j = 0; j < kernel.cols; j++) {
+			if (j == 0)
+				kernel.mat[i][j] = 1.0;
+			else if (j == 2)
+				kernel.mat[i][j] = -1.0;
+			else
+				kernel.mat[i][j] = 0.0;
+		}
+	}
+	printf("\n\n\nMatrix of filter \n");
+	print_mtx(&kernel);
+
+	filtering(&mtx,&kernel, 0, 1);
+	return 0;
 }
